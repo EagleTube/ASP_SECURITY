@@ -1,96 +1,55 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>SECURITY CLASSES</title>
+        <title>EagleEye ASP Sanitizing</title>
     </head>
 <body>
+    <p>
+       Click <a href="?str=!@%23$<code>abc</code>'%22 union select 1,2-- -%23..//%252e%252e//*&img=lol.txt.html">Here</a>
+    </p>
+<!--#include virtual="security.inc"-->
 <% 
-'Coded by Muhammad Aizat
-Class Security
-    Private function ereg_replace(strOriginalString, strPattern, strReplacement)
-        dim objRegExp : set objRegExp = new RegExp
-        objRegExp.Pattern = strPattern
-        objRegExp.IgnoreCase = True
-        objRegExp.Global = True
-        ereg_replace = objRegExp.replace(strOriginalString, strReplacement)
-        set objRegExp = nothing
-    End function
-
-    Private function URLDecode(sText)
-        sDecoded = sText
-        Set oRegExpr = Server.CreateObject("VBScript.RegExp")
-        oRegExpr.Pattern = "%[0-9,A-F]{2}"
-        oRegExpr.Global = True
-        Set oMatchCollection = oRegExpr.Execute(sText)
-        For Each oMatch In oMatchCollection
-            sDecoded = Replace(sDecoded,oMatch.value,Chr(CInt("&H" & Right(oMatch.Value,2))))
-        Next
-        URLDecode = sDecoded
-    End function
-
-    Private function ereg_sqli(strOriginalString)
-        Dim quotes
-        quotes =  array("%27","%22")
-        For i=0 to (uBound(quotes))
-            strOriginalString = ereg_replace(Server.URLEncode(strOriginalString),quotes(i),"/"&URLDecode(quotes(i)))
-            strOriginalString = URLDecode(strOriginalString)
-        Next
-        ereg_sqli = URLDecode(strOriginalString)
-    End function
-
-
-    Public function injection(strText,strType,lvl)
-        Dim point
-        Select Case strType
-            Case "sqlesc"
-                if lvl=1 Then
-                    strText = ereg_replace(strText,"[\'\-\#\""]", "")
-                ElseIf lvl=2 Then
-                    strText = ereg_sqli(strText)
-                    strText = ereg_replace(strText,"[\+]"," ")
-                End if
-            Case "htmlesc"
-                strText = Server.HTMLEncode(strText)
-            Case "rmspc"
-                strText = ereg_replace(strText,"[^A-Za-z0-9\s]", "")
-        End Select
-        injection = strText
-    End function
-
-End Class
-%>
-<% 
+response.write("Original String : "&request.querystring("str")&"<br><br>")
 Dim sec
 Set sec = new Security
 
 response.write("Escape only html character<br>")
-
 'XSS Example
 Dim xss
-xss = sec.injection(request.querystring("str"),"htmlesc",null)
+xss = sec.sanitize(request.querystring("str"),"htmlesc",null)
 response.write(xss)
 
-response.write("<br>Remove All Special Character<br>")
-
+response.write("<br><br>Remove All Special Character<br>")
 'Remove All Special Character
 Dim spc
-spc = sec.injection(request.querystring("str"),"rmspc",null)
+spc = sec.sanitize(request.querystring("str"),"rmspc",null)
 response.write(spc)
 
-response.write("<br>Remove only single&double quote , minus and hashtag symbol<br>")
-
+response.write("<br><br>Remove only single&double quote , minus and hashtag symbol<br>")
 'SQL Injection lvl 1
 Dim sql1
-sql1 = sec.injection(request.querystring("str"),"sqlesc",1)
+sql1 = sec.sanitize(request.querystring("str"),"sqlesc",1)
 response.write(sql1)
 
-response.write("<br>Single and double quote escape string<br>")
-
+response.write("<br><br>Single and double quote escape string<br>")
 'SQL Injection lvl 2
 Dim sql2
-sql2 = sec.injection(request.querystring("str"),"sqlesc",2)
+sql2 = sec.sanitize(request.querystring("str"),"sqlesc",2)
 response.write(sql2)
 
+response.write("<br><br>Dot and Slashes remover<br>")
+'Path traversal
+Dim trv
+trv = sec.sanitize(request.querystring("str"),"trav",null)
+response.write(trv)
+
+response.write("<br><br>Allowed Extension Image/Docs<br>")
+'File extension filter
+Dim ftx, ftx1
+ftx = sec.sanitize(request.querystring("img"),"fext",1)
+ftx1 = sec.sanitize(request.querystring("img"),"fext",2)
+response.write("Image ext : "&ftx&"<br>")
+response.write("Document ext : "&ftx1)
 %>
 </body>
 </html>
