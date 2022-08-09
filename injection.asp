@@ -42,16 +42,16 @@ Class Security
     Public function injection(strText,strType,lvl)
         Dim point
         Select Case strType
-            Case "sqli"
+            Case "sqlesc"
                 if lvl=1 Then
                     strText = ereg_replace(strText,"[\'\-\#\""]", "")
                 ElseIf lvl=2 Then
                     strText = ereg_sqli(strText)
                     strText = ereg_replace(strText,"[\+]"," ")
                 End if
-            Case "xss"
+            Case "htmlesc"
                 strText = Server.HTMLEncode(strText)
-            Case "spcial"
+            Case "rmspc"
                 strText = ereg_replace(strText,"[^A-Za-z0-9\s]", "")
         End Select
         injection = strText
@@ -67,28 +67,28 @@ response.write("Escape only html character<br>")
 
 'XSS Example
 Dim xss
-xss = sec.injection(request.querystring("str"),"xss",null)
+xss = sec.injection(request.querystring("str"),"htmlesc",null)
 response.write(xss)
 
 response.write("<br>Remove All Special Character<br>")
 
 'Remove All Special Character
 Dim spc
-spc = sec.injection(request.querystring("str"),"spcial",null)
+spc = sec.injection(request.querystring("str"),"rmspc",null)
 response.write(spc)
 
 response.write("<br>Remove only single&double quote , minus and hashtag symbol<br>")
 
 'SQL Injection lvl 1
 Dim sql1
-sql1 = sec.injection(request.querystring("str"),"sqli",1)
+sql1 = sec.injection(request.querystring("str"),"sqlesc",1)
 response.write(sql1)
 
 response.write("<br>Single and double quote escape string<br>")
 
 'SQL Injection lvl 2
 Dim sql2
-sql2 = sec.injection(request.querystring("str"),"sqli",2)
+sql2 = sec.injection(request.querystring("str"),"sqlesc",2)
 response.write(sql2)
 
 %>
