@@ -1,5 +1,7 @@
 # ASP_SECURITY
-Reseaching about web security for asp classic backends
+Reseaching about web security for asp classic backends<br>
+If you got a bypass , please contact me or comments!<br>
+So I can continue my research about asp
 <br>
 # Mainly focused on
 - SQL Injection <br>
