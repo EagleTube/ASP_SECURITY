@@ -7,7 +7,6 @@ So I can continue my research about asp
 Everything I done and published in this repo are for study purpose<br>
 Use it for our own studies <br>
 Otherwise I wont take any responsibilites <br>
-If you have
 # Mainly focused on
 - SQL Injection <br>
 - XSS Injection <br>
