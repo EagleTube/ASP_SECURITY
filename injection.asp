@@ -5,7 +5,7 @@
     </head>
 <body>
     <p>
-       Click <a href="?str=!@%23$<code>abc</code>'%22 union select 1,2-- -%23..//%252e%252e//*&img=lol.txt.html">Here</a>
+       Click <a href="?str=!@%23$<code>abc</code>'%22 union select 1,2-- -%23..//%252e%252e//*&file=lol.jpg">Here</a>
     </p>
 <!--#include virtual="security.inc"-->
 <% 
@@ -16,40 +16,45 @@ Set sec = new Security
 response.write("Escape only html character<br>")
 'XSS Example
 Dim xss
-xss = sec.sanitize(request.querystring("str"),"htmlesc",null)
-response.write(xss)
+xss = sec.htmlEsc(request.querystring("str"))
+response.write(xss&"<br>")
+response.write("<img src='"&xss&"'>")
 
 response.write("<br><br>Remove All Special Character<br>")
 'Remove All Special Character
 Dim spc
-spc = sec.sanitize(request.querystring("str"),"rmspc",null)
+spc = sec.noSpecialChar(request.querystring("str"))
 response.write(spc)
 
 response.write("<br><br>Remove only single&double quote , minus and hashtag symbol<br>")
 'SQL Injection lvl 1
 Dim sql1
-sql1 = sec.sanitize(request.querystring("str"),"sqlesc",1)
+sql1 = sec.rmSqliChar(request.querystring("str"))
 response.write(sql1)
 
 response.write("<br><br>Single and double quote escape string<br>")
 'SQL Injection lvl 2
 Dim sql2
-sql2 = sec.sanitize(request.querystring("str"),"sqlesc",2)
+sql2 = sec.sqlEscStr(request.querystring("str"))
 response.write(sql2)
 
-response.write("<br><br>Dot and Slashes remover<br>")
-'Path traversal
-Dim trv
-trv = sec.sanitize(request.querystring("str"),"trav",null)
-response.write(trv)
-
-response.write("<br><br>Allowed Extension Image/Docs<br>")
+response.write("<br><br>Allowed Extension Image&Docs<br>")
 'File extension filter
-Dim ftx, ftx1
-ftx = sec.sanitize(request.querystring("img"),"fext",1)
-ftx1 = sec.sanitize(request.querystring("img"),"fext",2)
-response.write("Image ext : "&ftx&"<br>")
-response.write("Document ext : "&ftx1)
+Dim ftx
+ftx = sec.extAllowed(request.querystring("file"),null)
+response.write("Allowed : "&ftx)
+
+response.write("<br><br>Basename : ")
+'File extension filter
+response.write(sec.basename(request.querystring("file")))
+
+response.write("<br><br>Is Email valid? :")
+'Email filter
+response.write("<br>mail's@email.com : ")
+response.write(sec.isEmail("mail's@email.com"))
+response.write("<br>eagle@email.com : ")
+response.write(sec.isEmail("eagle@email.com"))
+
 %>
 </body>
 </html>
